@@ -104,7 +104,19 @@ export async function deleteBoard(id: string) {
     return { success: true }
   } catch (error) {
     console.error('Error deleting board:', error)
-    return { success: false, error: 'Failed to delete board' }
+    
+    // Provide more specific error messages
+    if (error instanceof Error) {
+      if (error.message.includes('Record to delete does not exist')) {
+        return { success: false, error: 'Board not found' }
+      }
+      if (error.message.includes('SQLITE') || error.message.includes('database')) {
+        return { success: false, error: 'Database error. Please try again or contact support.' }
+      }
+      return { success: false, error: `Failed to delete board: ${error.message}` }
+    }
+    
+    return { success: false, error: 'An unexpected error occurred. Please try again.' }
   }
 }
 
@@ -116,6 +128,20 @@ export async function createTask(boardId: string, formData: FormData) {
 
     if (!title || title.trim().length === 0) {
       return { success: false, error: 'Task title is required' }
+    }
+
+    // Validate title length
+    if (title.trim().length > 255) {
+      return { success: false, error: 'Task title is too long (max 255 characters)' }
+    }
+
+    // Verify board exists
+    const board = await prisma.board.findUnique({
+      where: { id: boardId }
+    })
+
+    if (!board) {
+      return { success: false, error: 'Board not found' }
     }
 
     const task = await prisma.task.create({
@@ -131,7 +157,19 @@ export async function createTask(boardId: string, formData: FormData) {
     return { success: true, data: task }
   } catch (error) {
     console.error('Error creating task:', error)
-    return { success: false, error: 'Failed to create task' }
+    
+    // Provide more specific error messages
+    if (error instanceof Error) {
+      if (error.message.includes('SQLITE') || error.message.includes('database')) {
+        return { success: false, error: 'Database error. Please try again or contact support.' }
+      }
+      if (error.message.includes('Foreign key constraint')) {
+        return { success: false, error: 'Board not found' }
+      }
+      return { success: false, error: `Failed to create task: ${error.message}` }
+    }
+    
+    return { success: false, error: 'An unexpected error occurred. Please try again.' }
   }
 }
 
@@ -141,6 +179,16 @@ export async function updateTask(
   data: { title?: string; status?: TaskStatus; description?: string }
 ) {
   try {
+    // Validate title if provided
+    if (data.title !== undefined) {
+      if (data.title.trim().length === 0) {
+        return { success: false, error: 'Task title cannot be empty' }
+      }
+      if (data.title.trim().length > 255) {
+        return { success: false, error: 'Task title is too long (max 255 characters)' }
+      }
+    }
+
     const task = await prisma.task.update({
       where: { id: taskId },
       data: {
@@ -154,7 +202,19 @@ export async function updateTask(
     return { success: true, data: task }
   } catch (error) {
     console.error('Error updating task:', error)
-    return { success: false, error: 'Failed to update task' }
+    
+    // Provide more specific error messages
+    if (error instanceof Error) {
+      if (error.message.includes('Record to update not found')) {
+        return { success: false, error: 'Task not found' }
+      }
+      if (error.message.includes('SQLITE') || error.message.includes('database')) {
+        return { success: false, error: 'Database error. Please try again or contact support.' }
+      }
+      return { success: false, error: `Failed to update task: ${error.message}` }
+    }
+    
+    return { success: false, error: 'An unexpected error occurred. Please try again.' }
   }
 }
 
@@ -168,6 +228,18 @@ export async function deleteTask(taskId: string, boardId: string) {
     return { success: true }
   } catch (error) {
     console.error('Error deleting task:', error)
-    return { success: false, error: 'Failed to delete task' }
+    
+    // Provide more specific error messages
+    if (error instanceof Error) {
+      if (error.message.includes('Record to delete does not exist')) {
+        return { success: false, error: 'Task not found' }
+      }
+      if (error.message.includes('SQLITE') || error.message.includes('database')) {
+        return { success: false, error: 'Database error. Please try again or contact support.' }
+      }
+      return { success: false, error: `Failed to delete task: ${error.message}` }
+    }
+    
+    return { success: false, error: 'An unexpected error occurred. Please try again.' }
   }
 }

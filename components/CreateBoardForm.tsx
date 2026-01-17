@@ -10,11 +10,13 @@ export default function CreateBoardForm() {
   const [error, setError] = useState<string>('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  async function handleSubmit(formData: FormData) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
     setIsSubmitting(true)
     setError('')
 
     try {
+      const formData = new FormData(e.currentTarget)
       const result = await createBoard(formData)
 
       if (result.success) {
@@ -35,7 +37,7 @@ export default function CreateBoardForm() {
     <div className="bg-white rounded-lg shadow p-6">
       <h2 className="text-xl font-semibold mb-4 text-black">Create New Board</h2>
       
-      <form ref={formRef} action={handleSubmit} className="space-y-4">
+      <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
             Board Name *

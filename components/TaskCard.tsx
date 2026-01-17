@@ -2,6 +2,7 @@
 
 import { deleteTask, updateTask } from '@/app/actions'
 import { Task, TaskStatus } from '@/types'
+import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 type Props = {
@@ -10,15 +11,29 @@ type Props = {
 }
 
 export default function TaskCard({ task, boardId }: Props) {
+  const router = useRouter()
   const [isEditing, setIsEditing] = useState(false)
   const [title, setTitle] = useState(task.title)
   const [isUpdating, setIsUpdating] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [error, setError] = useState<string>('')
 
   async function handleStatusChange(newStatus: TaskStatus) {
     setIsUpdating(true)
-    await updateTask(task.id, boardId, { status: newStatus })
-    setIsUpdating(false)
+    setError('')
+    try {
+      const result = await updateTask(task.id, boardId, { status: newStatus })
+      if (result.success) {
+        router.refresh()
+      } else {
+        setError(result.error || 'Failed to update status')
+      }
+    } catch (err) {
+      setError('An unexpected error occurred')
+      console.error('Error updating status:', err)
+    } finally {
+      setIsUpdating(false)
+    }
   }
 
   async function handleTitleSave() {
@@ -34,12 +49,22 @@ export default function TaskCard({ task, boardId }: Props) {
     }
 
     setIsUpdating(true)
-    const result = await updateTask(task.id, boardId, { title: title.trim() })
-    setIsUpdating(false)
-    setIsEditing(false)
-
-    if (!result.success) {
+    setError('')
+    try {
+      const result = await updateTask(task.id, boardId, { title: title.trim() })
+      if (result.success) {
+        router.refresh()
+      } else {
+        setTitle(task.title)
+        setError(result.error || 'Failed to update title')
+      }
+    } catch (err) {
       setTitle(task.title)
+      setError('An unexpected error occurred')
+      console.error('Error updating title:', err)
+    } finally {
+      setIsUpdating(false)
+      setIsEditing(false)
     }
   }
 
@@ -47,7 +72,20 @@ export default function TaskCard({ task, boardId }: Props) {
     if (!confirm(`Delete task "${task.title}"?`)) return
 
     setIsDeleting(true)
-    await deleteTask(task.id, boardId)
+    setError('')
+    try {
+      const result = await deleteTask(task.id, boardId)
+      if (result.success) {
+        router.refresh()
+      } else {
+        setError(result.error || 'Failed to delete task')
+        setIsDeleting(false)
+      }
+    } catch (err) {
+      setError('An unexpected error occurred')
+      console.error('Error deleting task:', err)
+      setIsDeleting(false)
+    }
   }
 
   return (
@@ -97,6 +135,13 @@ export default function TaskCard({ task, boardId }: Props) {
           <option value="done">Done</option>
         </select>
       </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded p-2 text-xs text-red-700 mb-2">
+          {error}
+        </div>
+      )}
 
       {/* Footer */}
       <div className="flex items-center justify-between text-xs text-gray-500 pt-2 border-t">

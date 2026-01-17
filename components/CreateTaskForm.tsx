@@ -1,6 +1,7 @@
 'use client'
 
 import { createTask } from '@/app/actions'
+import { useRouter } from 'next/navigation'
 import { useRef, useState } from 'react'
 
 type Props = {
@@ -9,29 +10,38 @@ type Props = {
 
 export default function CreateTaskForm({ boardId }: Props) {
   const formRef = useRef<HTMLFormElement>(null)
+  const router = useRouter()
   const [error, setError] = useState<string>('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  async function handleSubmit(formData: FormData) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
     setIsSubmitting(true)
     setError('')
 
-    const result = await createTask(boardId, formData)
+    try {
+      const formData = new FormData(e.currentTarget)
+      const result = await createTask(boardId, formData)
 
-    if (result.success) {
-      formRef.current?.reset()
-    } else {
-      setError(result.error || 'Failed to create task')
+      if (result.success) {
+        formRef.current?.reset()
+        router.refresh()
+      } else {
+        setError(result.error || 'Failed to create task')
+      }
+    } catch (err) {
+      setError('An unexpected error occurred')
+      console.error('Form submission error:', err)
+    } finally {
+      setIsSubmitting(false)
     }
-
-    setIsSubmitting(false)
   }
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <h2 className="text-xl font-semibold mb-4">Create New Task</h2>
       
-      <form ref={formRef} action={handleSubmit} className="space-y-4">
+      <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="md:col-span-2">
             <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">

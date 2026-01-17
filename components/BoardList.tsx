@@ -3,6 +3,7 @@
 import { deleteBoard } from '@/app/actions'
 import { BoardWithTaskCount } from '@/types'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 type Props = {
@@ -10,14 +11,28 @@ type Props = {
 }
 
 export default function BoardList({ boards }: Props) {
+  const router = useRouter()
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [error, setError] = useState<string>('')
 
   async function handleDelete(id: string, name: string) {
     if (!confirm(`Delete "${name}" and all its tasks?`)) return
 
     setDeletingId(id)
-    await deleteBoard(id)
-    setDeletingId(null)
+    setError('')
+    try {
+      const result = await deleteBoard(id)
+      if (result.success) {
+        router.refresh()
+      } else {
+        setError(result.error || 'Failed to delete board')
+        setDeletingId(null)
+      }
+    } catch (err) {
+      setError('An unexpected error occurred')
+      console.error('Error deleting board:', err)
+      setDeletingId(null)
+    }
   }
 
   if (boards.length === 0) {
@@ -29,7 +44,13 @@ export default function BoardList({ boards }: Props) {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div>
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded p-3 text-sm text-red-700 mb-4">
+          {error}
+        </div>
+      )}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {boards.map((board) => (
         <div
           key={board.id}
@@ -64,6 +85,7 @@ export default function BoardList({ boards }: Props) {
           </div>
         </div>
       ))}
+      </div>
     </div>
   )
 }
