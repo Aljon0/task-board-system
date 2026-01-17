@@ -1,7 +1,7 @@
 'use server'
 
 import { prisma } from '@/lib/prisma';
-import { BoardWithTaskCount, TaskStatus } from '@/types';
+import { BoardWithTaskCount, BoardWithTasks, TaskStatus } from '@/types';
 import { revalidatePath } from 'next/cache';
 
 // Define consistent return types
@@ -27,7 +27,7 @@ export async function getBoards(): Promise<ActionResult<BoardWithTaskCount[]>> {
   }
 }
 
-export async function getBoard(id: string): Promise<ActionResult> {
+export async function getBoard(id: string): Promise<ActionResult<BoardWithTasks>> {
   try {
     // Validate id before querying
     if (!id || typeof id !== 'string' || id.trim().length === 0) {

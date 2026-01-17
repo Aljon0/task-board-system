@@ -23,13 +23,13 @@ export default async function BoardDetailPage({ params }: Props) {
   const result = await getBoard(id)
   // #region agent log
   const timestamp2 = getTimestamp()
-  fetch('http://127.0.0.1:7242/ingest/8b9b42c1-c8a7-4ac1-865c-e3af5c066549',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/board/[id]/page.tsx:14',message:'After getBoard call',data:{success:result.success,hasData:!!result.data,tasksCount:result.data?.tasks?.length},timestamp:timestamp2,sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+  fetch('http://127.0.0.1:7242/ingest/8b9b42c1-c8a7-4ac1-865c-e3af5c066549',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/board/[id]/page.tsx:14',message:'After getBoard call',data:{success:result.success,hasData:result.success?!!result.data:false,tasksCount:result.success?result.data?.tasks?.length:undefined},timestamp:timestamp2,sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
   // #endregion
 
   if (!result.success || !result.data) {
     // #region agent log
     const timestamp3 = getTimestamp()
-    fetch('http://127.0.0.1:7242/ingest/8b9b42c1-c8a7-4ac1-865c-e3af5c066549',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/board/[id]/page.tsx:16',message:'Board not found branch',data:{success:result.success,hasData:!!result.data},timestamp:timestamp3,sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7242/ingest/8b9b42c1-c8a7-4ac1-865c-e3af5c066549',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/board/[id]/page.tsx:16',message:'Board not found branch',data:{success:result.success,hasData:result.success?!!result.data:false},timestamp:timestamp3,sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
     // #endregion
     notFound()
   }
