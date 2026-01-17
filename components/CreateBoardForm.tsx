@@ -58,7 +58,7 @@ export default function CreateBoardForm() {
             id="description"
             name="description"
             rows={2}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
             placeholder="Brief description of this board..."
           />
         </div>
