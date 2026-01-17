@@ -1,8 +1,8 @@
 'use server'
 
-import { prisma } from '@/lib/prisma'
-import { BoardWithTaskCount, TaskStatus } from '@/types'
-import { revalidatePath } from 'next/cache'
+import { prisma } from '@/lib/prisma';
+import { BoardWithTaskCount, TaskStatus } from '@/types';
+import { revalidatePath } from 'next/cache';
 
 export async function getBoards(): Promise<
   | { success: true; data: BoardWithTaskCount[] }
