@@ -6,7 +6,7 @@ export default function NotFound() {
       <div className="text-center">
         <h1 className="text-4xl font-bold text-gray-900 mb-4">Board Not Found</h1>
         <p className="text-gray-600 mb-8">
-          The board you're looking for doesn't exist or has been deleted.
+          The board you&apos;re looking for doesn&apos;t exist or has been deleted.
         </p>
         <Link 
           href="/"
