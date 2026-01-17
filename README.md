@@ -184,6 +184,57 @@ All database operations use Server Actions (`app/actions.ts`):
 - Prisma-generated types for database models
 - Strict TypeScript configuration
 
+## Production Deployment
+
+### Database Configuration
+
+The application automatically handles database paths for production:
+
+- **Development**: Database is stored at `prisma/dev.db`
+- **Production**: Database is stored in a writable temp directory (`/tmp` on Unix, system temp on Windows)
+
+### Environment Variables
+
+You can optionally set `DATABASE_URL` to specify a custom database path:
+
+```bash
+# Example: Custom database path
+DATABASE_URL="file:/path/to/your/database.db"
+```
+
+### Running Migrations in Production
+
+Before deploying, ensure migrations are run:
+
+```bash
+# Generate Prisma Client
+npx prisma generate
+
+# Run migrations
+npx prisma migrate deploy
+```
+
+### Important Notes for Serverless Deployments
+
+⚠️ **SQLite Limitations in Serverless Environments**:
+
+- SQLite databases in `/tmp` are **ephemeral** and will be lost between function invocations on most serverless platforms (Vercel, AWS Lambda, etc.)
+- For production serverless deployments, consider using a managed database service (PostgreSQL, MySQL, etc.)
+- For persistent storage, you may need to:
+  - Use a persistent volume/mount (platform-specific)
+  - Use an external database service
+  - Migrate to a database that supports serverless (e.g., PostgreSQL with connection pooling)
+
+### Production Build
+
+```bash
+# Build for production
+npm run build
+
+# Start production server
+npm start
+```
+
 ## Troubleshooting
 
 ### Prisma Client Issues
@@ -196,7 +247,17 @@ npx prisma migrate reset
 ```
 
 ### Database File Location
-SQLite database is stored at: `prisma/dev.db`
+- **Development**: SQLite database is stored at `prisma/dev.db`
+- **Production**: Automatically uses writable temp directory
+
+### Database Write Errors in Production
+
+If you encounter "attempt to write a readonly database" errors:
+
+1. Ensure the application has write permissions to the database directory
+2. Check that `DATABASE_URL` points to a writable location
+3. Verify file system permissions on the deployment platform
+4. Consider using a managed database service for production
 
 ### Port Already in Use
 Change port in `package.json`:
