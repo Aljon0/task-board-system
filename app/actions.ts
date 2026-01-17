@@ -4,10 +4,12 @@ import { prisma } from '@/lib/prisma';
 import { BoardWithTaskCount, TaskStatus } from '@/types';
 import { revalidatePath } from 'next/cache';
 
-export async function getBoards(): Promise<
-  | { success: true; data: BoardWithTaskCount[] }
-  | { success: false; error: string }
-> {
+// Define consistent return types
+type SuccessResult<T = unknown> = { success: true; data: T }
+type ErrorResult = { success: false; error: string }
+type ActionResult<T = unknown> = SuccessResult<T> | ErrorResult
+
+export async function getBoards(): Promise<ActionResult<BoardWithTaskCount[]>> {
   try {
     const boards = await prisma.board.findMany({
       include: {
@@ -25,7 +27,7 @@ export async function getBoards(): Promise<
   }
 }
 
-export async function getBoard(id: string) {
+export async function getBoard(id: string): Promise<ActionResult> {
   try {
     // Validate id before querying
     if (!id || typeof id !== 'string' || id.trim().length === 0) {
@@ -52,12 +54,13 @@ export async function getBoard(id: string) {
   }
 }
 
-export async function createBoard(formData: FormData) {
+export async function createBoard(formData: FormData): Promise<ActionResult> {
   try {
-    const name = formData.get('name') as string
-    const description = formData.get('description') as string | null
+    const name = formData.get('name')
+    const description = formData.get('description')
 
-    if (!name || name.trim().length === 0) {
+    // Validate name exists and is a string
+    if (!name || typeof name !== 'string' || name.trim().length === 0) {
       return { success: false, error: 'Board name is required' }
     }
 
@@ -69,12 +72,23 @@ export async function createBoard(formData: FormData) {
     const board = await prisma.board.create({
       data: {
         name: name.trim(),
-        description: description?.trim() || null
+        description: description && typeof description === 'string' ? description.trim() : null
       }
     })
 
     revalidatePath('/')
-    return { success: true, data: board }
+    
+    // Return serializable data only
+    return { 
+      success: true, 
+      data: {
+        id: board.id,
+        name: board.name,
+        description: board.description,
+        createdAt: board.createdAt.toISOString(),
+        updatedAt: board.updatedAt.toISOString()
+      }
+    }
   } catch (error) {
     console.error('Error creating board:', error)
     
@@ -94,14 +108,14 @@ export async function createBoard(formData: FormData) {
   }
 }
 
-export async function deleteBoard(id: string) {
+export async function deleteBoard(id: string): Promise<ActionResult> {
   try {
     await prisma.board.delete({
       where: { id }
     })
 
     revalidatePath('/')
-    return { success: true }
+    return { success: true, data: null }
   } catch (error) {
     console.error('Error deleting board:', error)
     
@@ -120,13 +134,14 @@ export async function deleteBoard(id: string) {
   }
 }
 
-export async function createTask(boardId: string, formData: FormData) {
+export async function createTask(boardId: string, formData: FormData): Promise<ActionResult> {
   try {
-    const title = formData.get('title') as string
-    const description = formData.get('description') as string | null
-    const status = (formData.get('status') as TaskStatus) || 'todo'
+    const title = formData.get('title')
+    const description = formData.get('description')
+    const status = formData.get('status') as TaskStatus | null
 
-    if (!title || title.trim().length === 0) {
+    // Validate title
+    if (!title || typeof title !== 'string' || title.trim().length === 0) {
       return { success: false, error: 'Task title is required' }
     }
 
@@ -147,14 +162,27 @@ export async function createTask(boardId: string, formData: FormData) {
     const task = await prisma.task.create({
       data: {
         title: title.trim(),
-        description: description?.trim() || null,
-        status,
+        description: description && typeof description === 'string' ? description.trim() : null,
+        status: status || 'todo',
         boardId
       }
     })
 
     revalidatePath(`/board/${boardId}`)
-    return { success: true, data: task }
+    
+    // Return serializable data
+    return { 
+      success: true, 
+      data: {
+        id: task.id,
+        title: task.title,
+        description: task.description,
+        status: task.status,
+        boardId: task.boardId,
+        createdAt: task.createdAt.toISOString(),
+        updatedAt: task.updatedAt.toISOString()
+      }
+    }
   } catch (error) {
     console.error('Error creating task:', error)
     
@@ -177,7 +205,7 @@ export async function updateTask(
   taskId: string,
   boardId: string,
   data: { title?: string; status?: TaskStatus; description?: string }
-) {
+): Promise<ActionResult> {
   try {
     // Validate title if provided
     if (data.title !== undefined) {
@@ -199,7 +227,20 @@ export async function updateTask(
     })
 
     revalidatePath(`/board/${boardId}`)
-    return { success: true, data: task }
+    
+    // Return serializable data
+    return { 
+      success: true, 
+      data: {
+        id: task.id,
+        title: task.title,
+        description: task.description,
+        status: task.status,
+        boardId: task.boardId,
+        createdAt: task.createdAt.toISOString(),
+        updatedAt: task.updatedAt.toISOString()
+      }
+    }
   } catch (error) {
     console.error('Error updating task:', error)
     
@@ -218,14 +259,14 @@ export async function updateTask(
   }
 }
 
-export async function deleteTask(taskId: string, boardId: string) {
+export async function deleteTask(taskId: string, boardId: string): Promise<ActionResult> {
   try {
     await prisma.task.delete({
       where: { id: taskId }
     })
 
     revalidatePath(`/board/${boardId}`)
-    return { success: true }
+    return { success: true, data: null }
   } catch (error) {
     console.error('Error deleting task:', error)
     

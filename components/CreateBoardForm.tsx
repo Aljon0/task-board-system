@@ -19,11 +19,11 @@ export default function CreateBoardForm() {
       const formData = new FormData(e.currentTarget)
       const result = await createBoard(formData)
 
-      if (result.success) {
+      if (result?.success) {
         formRef.current?.reset()
         router.refresh()
       } else {
-        setError(result.error || 'Failed to create board')
+        setError(result?.error || 'Failed to create board')
       }
     } catch (err) {
       setError('An unexpected error occurred')
@@ -47,7 +47,7 @@ export default function CreateBoardForm() {
             id="name"
             name="name"
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
             placeholder="e.g., Q1 Marketing Campaign"
           />
         </div>
