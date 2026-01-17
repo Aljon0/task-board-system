@@ -33,7 +33,7 @@ export default function CreateBoardForm() {
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
-      <h2 className="text-xl font-semibold mb-4">Create New Board</h2>
+      <h2 className="text-xl font-semibold mb-4 text-black">Create New Board</h2>
       
       <form ref={formRef} action={handleSubmit} className="space-y-4">
         <div>
