@@ -91,14 +91,48 @@ try {
   throw error
 }
 
-let adapter: PrismaBetterSqlite3
+function initializePrisma(): PrismaClient {
+  try {
+    // Ensure database directory exists before initializing adapter
+    const dbDir = path.dirname(dbPath)
+    if (!fs.existsSync(dbDir)) {
+      fs.mkdirSync(dbDir, { recursive: true })
+    }
+
+    // The database file will be created by Prisma if it doesn't exist
+    // But we need to ensure the directory is writable
+    if (!fs.existsSync(dbPath)) {
+      // Test if we can create a file in the directory
+      try {
+        const testFile = path.join(dbDir, '.test-write')
+        fs.writeFileSync(testFile, 'test')
+        fs.unlinkSync(testFile)
+      } catch {
+        console.error('Cannot write to database directory:', dbDir)
+        throw new Error(`Database directory is not writable: ${dbDir}`)
+      }
+    }
+
+    // Initialize adapter with the database path
+    const adapter = new PrismaBetterSqlite3({ url: dbPath })
+    const prismaInstance = new PrismaClient({ adapter })
+    
+    return prismaInstance
+  } catch (error) {
+    console.error('Failed to initialize Prisma client:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    throw new Error(`Failed to initialize database: ${errorMessage}`)
+  }
+}
+
+// Initialize Prisma client
 let prismaInstance: PrismaClient
 
 try {
-  adapter = new PrismaBetterSqlite3({ url: dbPath })
-  prismaInstance = new PrismaClient({ adapter })
+  prismaInstance = initializePrisma()
 } catch (error) {
-  console.error('Failed to initialize Prisma client:', error)
+  console.error('Prisma initialization error:', error)
+  // Re-throw to prevent app from starting with broken database connection
   throw error
 }
 

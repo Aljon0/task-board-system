@@ -1,0 +1,18 @@
+{
+    "buildCommand": "prisma generate && prisma migrate deploy && npm run build",
+    "framework": "nextjs",
+    "regions": [
+        "iad1"
+    ],
+    "functions": {
+        "app/**/*.ts": {
+            "maxDuration": 10
+        }
+    },
+    "rewrites": [
+        {
+            "source": "/(.*)",
+            "destination": "/"
+        }
+    ]
+}

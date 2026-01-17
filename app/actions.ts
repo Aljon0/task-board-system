@@ -61,6 +61,11 @@ export async function createBoard(formData: FormData) {
       return { success: false, error: 'Board name is required' }
     }
 
+    // Validate name length
+    if (name.trim().length > 255) {
+      return { success: false, error: 'Board name is too long (max 255 characters)' }
+    }
+
     const board = await prisma.board.create({
       data: {
         name: name.trim(),
@@ -72,8 +77,20 @@ export async function createBoard(formData: FormData) {
     return { success: true, data: board }
   } catch (error) {
     console.error('Error creating board:', error)
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-    return { success: false, error: `Failed to create board: ${errorMessage}` }
+    
+    // Provide more specific error messages
+    if (error instanceof Error) {
+      // Check for common Prisma errors
+      if (error.message.includes('SQLITE') || error.message.includes('database')) {
+        return { success: false, error: 'Database error. Please try again or contact support.' }
+      }
+      if (error.message.includes('Unique constraint')) {
+        return { success: false, error: 'A board with this name already exists' }
+      }
+      return { success: false, error: `Failed to create board: ${error.message}` }
+    }
+    
+    return { success: false, error: 'An unexpected error occurred. Please try again.' }
   }
 }
 
